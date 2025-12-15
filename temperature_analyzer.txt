@@ -1,0 +1,108 @@
+# The temperature_analyzer script implements the following requirements:
+# 1/ The system should accept temperature readings in Celsius or Fahrenheit.
+# 2/ The system should convert the temperature to Celsius for analysis (if provided in Fahrenheit).
+# 3/ The system should classify the patient's status based on body temperature and age-dependent thresholds. 
+# 4/ The system should support displaying the status (if enabled) and logging it to a file (if enabled).
+ 
+ 
+last_status = None
+tmp_cache = None
+unit_used_globally = "C"
+debug_enabled = False
+
+LOW_FEVER_THRESHOLD = 38
+HIGH_FEVER_THRESHOLD = 39.4
+BABY_FEVER_THRESHOLD = 37.4
+
+
+def convert_to_celsius(temp):
+    global tmp_cache
+
+    if temp < -100 or temp > 300:
+        print("Warning: Unrealistic temperature detected.")
+
+    c = (temp - 32) * 5/9
+
+    tmp_cache = c
+    return c
+
+
+def has_fever(temp, scale="C"):
+    try:
+        if scale == "C":
+            fever = temp > LOW_FEVER_THRESHOLD
+        else:
+            c = (temp - 32) * 5/9
+            fever = c > LOW_FEVER_THRESHOLD
+
+        return fever
+    except:
+        return None
+
+
+def analyze_patient(temp, age, verbose=0, emergency_mode=False, log=False):
+    global last_status
+
+    if emergency_mode and temp < 30:
+        last_status = "HYPOTHERMIA?"
+        return last_status
+
+    temp = convert_to_celsius(temp)
+
+    if age < 3:
+        threshold = BABY_FEVER_THRESHOLD
+    else:
+        threshold = HIGH_FEVER_THRESHOLD
+
+    if temp > threshold:
+        status = "FEVER"
+    else:
+        if verbose > 2 and temp > threshold - 0.2:
+            status = "ALMOST FEVER"
+        else:
+            status = "NORMAL"
+
+    last_status = status
+
+    if log:
+        try:
+            with open("temp_log.txt", "a") as f:
+                f.write(f"TEMP={temp}, AGE={age}, STATUS={status}\n")
+        except:
+            pass
+
+    return status
+
+    print("Patient status:", status)
+    return status
+
+
+def get_status_report(include_temp=False, format="long"):
+    global last_status, tmp_cache
+
+    if include_temp:
+        return {"status": last_status, "temp_cache": tmp_cache}
+    elif format == "code":
+        return last_status[:2] if last_status else None
+    else:
+        return f"Current status: {last_status}"
+
+
+if __name__ == "__main__":
+
+    temp = 109.7
+    age = 5
+
+    print("Analyzing temperature:", temp)
+
+    result = analyze_patient(
+        temp,
+        age,
+        verbose=3,
+        emergency_mode=False,
+        log=True
+    )
+
+    print("Result:", result)
+    print("Last status:", last_status)
+    print("Status report:", get_status_report(include_temp=True))
