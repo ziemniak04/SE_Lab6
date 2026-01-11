@@ -3,8 +3,8 @@
 # 2/ The system should convert the temperature to Celsius for analysis (if provided in Fahrenheit).
 # 3/ The system should classify the patient's status based on body temperature and age-dependent thresholds. 
 # 4/ The system should support displaying the status (if enabled) and logging it to a file (if enabled).
- 
- 
+
+
 last_status = None
 tmp_cache = None
 unit_used_globally = "C"
@@ -15,13 +15,16 @@ HIGH_FEVER_THRESHOLD = 39.4
 BABY_FEVER_THRESHOLD = 37.4
 
 
-def convert_to_celsius(temp):
+def convert_to_celsius(temp, scale="C"):
     global tmp_cache
 
     if temp < -100 or temp > 300:
         print("Warning: Unrealistic temperature detected.")
 
-    c = (temp - 32) * 5/9
+    if scale == "F":
+        c = (temp - 32) * 5/9
+    else:
+        c = temp
 
     tmp_cache = c
     return c
@@ -29,25 +32,21 @@ def convert_to_celsius(temp):
 
 def has_fever(temp, scale="C"):
     try:
-        if scale == "C":
-            fever = temp > LOW_FEVER_THRESHOLD
-        else:
-            c = (temp - 32) * 5/9
-            fever = c > LOW_FEVER_THRESHOLD
-
+        c = convert_to_celsius(temp, scale)
+        fever = c > LOW_FEVER_THRESHOLD
         return fever
-    except:
+    except (TypeError, ValueError):
         return None
 
 
-def analyze_patient(temp, age, verbose=0, emergency_mode=False, log=False):
+def analyze_patient(temp, age, verbose=0, emergency_mode=False, log=False, scale="C"):
     global last_status
 
     if emergency_mode and temp < 30:
         last_status = "HYPOTHERMIA?"
         return last_status
 
-    temp = convert_to_celsius(temp)
+    temp = convert_to_celsius(temp, scale)
 
     if age < 3:
         threshold = BABY_FEVER_THRESHOLD
@@ -68,12 +67,9 @@ def analyze_patient(temp, age, verbose=0, emergency_mode=False, log=False):
         try:
             with open("temp_log.txt", "a") as f:
                 f.write(f"TEMP={temp}, AGE={age}, STATUS={status}\n")
-        except:
+        except IOError:
             pass
 
-    return status
-
-    print("Patient status:", status)
     return status
 
 
