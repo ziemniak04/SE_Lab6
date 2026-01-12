@@ -6,7 +6,7 @@
 
 
 last_status = None
-tmp_cache = None
+temperature_cache = None
 unit_used_globally = "C"
 debug_enabled = False
 
@@ -15,48 +15,48 @@ HIGH_FEVER_THRESHOLD = 39.4
 BABY_FEVER_THRESHOLD = 37.4
 
 
-def convert_to_celsius(temp, scale="C"):
-    global tmp_cache
+def convert_to_celsius(temperature, scale="C"):
+    global temperature_cache
 
-    if temp < -100 or temp > 300:
+    if temperature < -100 or temperature > 300:
         print("Warning: Unrealistic temperature detected.")
 
     if scale == "F":
-        c = (temp - 32) * 5/9
+        celsius = (temperature - 32) * 5/9
     else:
-        c = temp
+        celsius = temperature
 
-    tmp_cache = c
-    return c
+    temperature_cache = celsius
+    return celsius
 
 
-def has_fever(temp, scale="C"):
+def has_fever(temperature, scale="C"):
     try:
-        c = convert_to_celsius(temp, scale)
-        fever = c > LOW_FEVER_THRESHOLD
+        celsius = convert_to_celsius(temperature, scale)
+        fever = celsius > LOW_FEVER_THRESHOLD
         return fever
     except (TypeError, ValueError):
         return None
 
 
-def analyze_patient(temp, age, verbose=0, emergency_mode=False, log=False, scale="C"):
+def analyze_patient(temperature, age, verbose=0, emergency_mode=False, log=False, scale="C"):
     global last_status
 
-    if emergency_mode and temp < 30:
+    if emergency_mode and temperature < 30:
         last_status = "HYPOTHERMIA?"
         return last_status
 
-    temp = convert_to_celsius(temp, scale)
+    temperature = convert_to_celsius(temperature, scale)
 
     if age < 3:
         threshold = BABY_FEVER_THRESHOLD
     else:
         threshold = HIGH_FEVER_THRESHOLD
 
-    if temp > threshold:
+    if temperature > threshold:
         status = "FEVER"
     else:
-        if verbose > 2 and temp > threshold - 0.2:
+        if verbose > 2 and temperature > threshold - 0.2:
             status = "ALMOST FEVER"
         else:
             status = "NORMAL"
@@ -66,18 +66,18 @@ def analyze_patient(temp, age, verbose=0, emergency_mode=False, log=False, scale
     if log:
         try:
             with open("temp_log.txt", "a") as f:
-                f.write(f"TEMP={temp}, AGE={age}, STATUS={status}\n")
+                f.write(f"TEMP={temperature}, AGE={age}, STATUS={status}\n")
         except IOError:
             pass
 
     return status
 
 
-def get_status_report(include_temp=False, format="long"):
-    global last_status, tmp_cache
+def get_status_report(include_temperature=False, format="long"):
+    global last_status, temperature_cache
 
-    if include_temp:
-        return {"status": last_status, "temp_cache": tmp_cache}
+    if include_temperature:
+        return {"status": last_status, "temperature_cache": temperature_cache}
     elif format == "code":
         return last_status[:2] if last_status else None
     else:
@@ -86,13 +86,13 @@ def get_status_report(include_temp=False, format="long"):
 
 if __name__ == "__main__":
 
-    temp = 109.7
+    temperature = 109.7
     age = 5
 
-    print("Analyzing temperature:", temp)
+    print("Analyzing temperature:", temperature)
 
     result = analyze_patient(
-        temp,
+        temperature,
         age,
         verbose=3,
         emergency_mode=False,
@@ -101,4 +101,4 @@ if __name__ == "__main__":
 
     print("Result:", result)
     print("Last status:", last_status)
-    print("Status report:", get_status_report(include_temp=True))
+    print("Status report:", get_status_report(include_temperature=True))

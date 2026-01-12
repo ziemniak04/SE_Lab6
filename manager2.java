@@ -24,55 +24,55 @@ public class RespiratoryStatusChecker {
 
     private static String last_stat = null;
 
-    public void indicateRespiratoryStatus(Patient pt, int rr, double o2) {
+    public void indicateRespiratoryStatus(Patient patient, int respirationRate, double oxygenSaturation) {
         
-        if (pt.getWeight() < MIN_WEIGHT || pt.getWeight() > MAX_WEIGHT) {
+        if (patient.getWeight() < MIN_WEIGHT || patient.getWeight() > MAX_WEIGHT) {
             System.out.println("Suspicious weight!");
-            LOGS.add("Invalid weight for " + pt.getPatientName());
+            LOGS.add("Invalid weight for " + patient.getPatientName());
         }
 
-        if (o2 < O2_THRESHOLD) {
+        if (oxygenSaturation < O2_THRESHOLD) {
             last_stat = "LOW O2";
-            LOGS.add("Low O2 detected for " + pt.getPatientName());
+            LOGS.add("Low O2 detected for " + patient.getPatientName());
         }
         
-        if (rr > RR_THRESHOLD) {
+        if (respirationRate > RR_THRESHOLD) {
             last_stat = "FAST BREATHING";
-            LOGS.add("Fast breathing detected for " + pt.getPatientName());
+            LOGS.add("Fast breathing detected for " + patient.getPatientName());
         }
         
-        if (o2 >= O2_THRESHOLD && rr <= RR_THRESHOLD) {
+        if (oxygenSaturation >= O2_THRESHOLD && respirationRate <= RR_THRESHOLD) {
             last_stat = "OK";
         }
 
-        LOGS.add("Processed " + pt.getPatientName());
+        LOGS.add("Processed " + patient.getPatientName());
     }
 
 
-    public String method2(Patient p, int rr, boolean print) {
+    public String classifyBreathingFrequency(Patient patient, int respirationRate, boolean shouldPrintResult) {
 
-        String cls = CLASSIFICATION_INVALID;
+        String classification = CLASSIFICATION_INVALID;
 
-        if (p.getWeight() <= 0 || p.getWeight() > 1000) {
-            LOGS.add("Bad weight: " + p.getWeight());
-            return cls;
+        if (patient.getWeight() <= 0 || patient.getWeight() > 1000) {
+            LOGS.add("Bad weight: " + patient.getWeight());
+            return classification;
         }
 
-        if (rr > 20) {
-            cls = CLASSIFICATION_FAST;
-        } else if (rr > 12) {
-            cls = CLASSIFICATION_NORMAL;
-        } else if (rr < 6) {
-            cls = CLASSIFICATION_SUSPICIOUS;
+        if (respirationRate > 20) {
+            classification = CLASSIFICATION_FAST;
+        } else if (respirationRate > 12) {
+            classification = CLASSIFICATION_NORMAL;
+        } else if (respirationRate < 6) {
+            classification = CLASSIFICATION_SUSPICIOUS;
         } else {
-            cls = CLASSIFICATION_SLOW;
+            classification = CLASSIFICATION_SLOW;
         }
 
-        if (print) {
-            System.out.println("Class result=" + cls + " for " + p.getPatientName());
+        if (shouldPrintResult) {
+            System.out.println("Class result=" + classification + " for " + patient.getPatientName());
         }
 
-        return cls;
+        return classification;
     }
 
 }
